@@ -1,164 +1,79 @@
 ﻿using AOP.Interceptors;
 using AOP.Proxies;
 using AOP.Services;
-using AOP.Services.Interfaces;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.Running;
 using Castle.DynamicProxy;
 
-[SimpleJob(RunStrategy.Monitoring, targetCount: 5)]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 100)]
 [MinColumn, MaxColumn, MeanColumn, MedianColumn, IterationsColumn]
 public class Program
 {
     private static readonly IFibonacciService _fibonacciService = new FibonacciService();
-    private static readonly ILocationService _locationService = new LocationService();
-    private static readonly IWeatherService _weatherService = new WeatherService();
-
-    private static readonly IWeatherService _profiledWeatherServiceProxy = new ProfiledWeatherServiceProxy();
-    private static readonly IWeatherService _cachedWeatherServiceProxy = new CachedWeatherServiceProxy();
-    private static readonly IWeatherService _loggedWeatherServiceProxy = new LoggedWeatherServiceProxy();
+    private static readonly IFibonacciService _profiledFibonacciServiceProxy = new ProfiledFibonacciServiceProxy();
+    private static readonly IFibonacciService _cachedFibonacciServiceProxy = new CachedFibonacciServiceProxy();
+    private static readonly IFibonacciService _loggedFibonacciServiceProxy = new LoggedFibonacciServiceProxy();
 
     private static readonly ProxyGenerator _proxyGenerator = new();
-    private static readonly IWeatherService _weatherServiceProfilingInterceptor = (IWeatherService)_proxyGenerator.CreateInterfaceProxyWithTarget(typeof(IWeatherService), new WeatherService(), new ProfiledWeatherServiceInterceptor());
-    private static readonly IWeatherService _weatherServiceCachingInterceptor = (IWeatherService)_proxyGenerator.CreateInterfaceProxyWithTarget(typeof(IWeatherService), new WeatherService(), new CachedWeatherServiceInterceptor());
-    private static readonly IWeatherService _weatherServiceLoggingInterceptor = (IWeatherService)_proxyGenerator.CreateInterfaceProxyWithTarget(typeof(IWeatherService), new WeatherService(), new LoggedWeatherServiceInterceptor());
+    private static readonly IFibonacciService _fibonacciServiceProfilingInterceptor = (IFibonacciService)_proxyGenerator.CreateInterfaceProxyWithTarget(typeof(IFibonacciService), new FibonacciService(), new ProfiledFibonacciServiceInterceptor());
+    private static readonly IFibonacciService _fibonacciServiceCachingInterceptor = (IFibonacciService)_proxyGenerator.CreateInterfaceProxyWithTarget(typeof(IFibonacciService), new FibonacciService(), new CachedFibonacciServiceInterceptor());
+    private static readonly IFibonacciService _fibonacciServiceLoggingInterceptor = (IFibonacciService)_proxyGenerator.CreateInterfaceProxyWithTarget(typeof(IFibonacciService), new FibonacciService(), new LoggedFibonacciServiceInterceptor());
 
-    [Params("Bursa", "Ankara", "İzmir")]
-    public static string _city;
+    [Params(34)]
+    public static int n;
 
-    public static async Task Main(string[] args)
+    [Params(true, false)]
+    public static bool optimized;
+
+    public static void Main(string[] args)
     {
         BenchmarkRunner.Run<Program>();
     }
 
     [Benchmark]
-    public async Task<object?> Default()
+    public ulong Default()
     {
-        var cityLocation = _locationService.Get(_city);
-        var data = await _weatherService.RetrieveWeatherForecast(cityLocation);
-        if (cityLocation == null || data == null)
-            return null;
-
-        var fib = _fibonacciService.CalculateWithCache(cityLocation.plateCode);
-        //return fib;
-        return new
-        {
-            PlateCode = cityLocation.plateCode,
-            FibonacciOfPlateCode = fib,
-            WeatherForecast = data
-        };
+        return _fibonacciService.Calculate(n, optimized);
     }
 
     #region PROXY PATTERN
     [Benchmark]
-    public async Task<object?> ProfileWithProxyPattern()
+    public ulong ProfileWithProxyPattern()
     {
-        var cityLocation = _locationService.Get(_city);
-        var data = await _profiledWeatherServiceProxy.RetrieveWeatherForecast(cityLocation);
-        if (cityLocation == null || data == null)
-            return null;
-
-        var fib = _fibonacciService.CalculateWithCache(cityLocation.plateCode);
-        //return fib;
-        return new
-        {
-            PlateCode = cityLocation.plateCode,
-            FibonacciOfPlateCode = fib,
-            WeatherForecast = data
-        };
+        return _profiledFibonacciServiceProxy.Calculate(n, optimized);
     }
 
     [Benchmark]
-    public async Task<object?> CacheWithProxyPattern()
+    public ulong CacheWithProxyPattern()
     {
-        var cityLocation = _locationService.Get(_city);
-        var data = await _cachedWeatherServiceProxy.RetrieveWeatherForecast(cityLocation);
-        if (cityLocation == null || data == null)
-            return null;
-
-        var fib = _fibonacciService.CalculateWithCache(cityLocation.plateCode);
-        //return fib;
-        return new
-        {
-            PlateCode = cityLocation.plateCode,
-            FibonacciOfPlateCode = fib,
-            WeatherForecast = data
-        };
+        return _cachedFibonacciServiceProxy.Calculate(n, optimized);
     }
 
     [Benchmark]
-    public async Task<object?> LogWithProxyPattern()
+    public ulong LogWithProxyPattern()
     {
-        var cityLocation = _locationService.Get(_city);
-        var data = await _loggedWeatherServiceProxy.RetrieveWeatherForecast(cityLocation);
-        if (cityLocation == null || data == null)
-            return null;
-
-        var fib = _fibonacciService.CalculateWithCache(cityLocation.plateCode);
-        //return fib;
-        return new
-        {
-            PlateCode = cityLocation.plateCode,
-            FibonacciOfPlateCode = fib,
-            WeatherForecast = data
-        };
+        return _loggedFibonacciServiceProxy.Calculate(n, optimized);
     }
     #endregion
 
     #region CASTLE DYNAMICPROXY
     [Benchmark]
-    public async Task<object?> ProfileWithCastleDynamicProxy()
+    public ulong ProfileWithCastleDynamicProxy()
     {
-        var cityLocation = _locationService.Get(_city);
-        var data = await _weatherServiceProfilingInterceptor.RetrieveWeatherForecast(cityLocation);
-        if (cityLocation == null || data == null)
-            return null;
-
-        var fib = _fibonacciService.CalculateWithCache(cityLocation.plateCode);
-        //return fib;
-        return new
-        {
-            PlateCode = cityLocation.plateCode,
-            FibonacciOfPlateCode = fib,
-            WeatherForecast = data
-        };
+        return _fibonacciServiceProfilingInterceptor.Calculate(n, optimized);
     }
 
     [Benchmark]
-    public async Task<object?> CacheWithCastleDynamicProxy()
+    public ulong CacheWithCastleDynamicProxy()
     {
-        var cityLocation = _locationService.Get(_city);
-        var data = await _weatherServiceCachingInterceptor.RetrieveWeatherForecast(cityLocation);
-        if (cityLocation == null || data == null)
-            return null;
-
-        var fib = _fibonacciService.CalculateWithCache(cityLocation.plateCode);
-        //return fib;
-        return new
-        {
-            PlateCode = cityLocation.plateCode,
-            FibonacciOfPlateCode = fib,
-            WeatherForecast = data
-        };
+        return _fibonacciServiceCachingInterceptor.Calculate(n, optimized);
     }
 
     [Benchmark]
-    public async Task<object?> LogWithCastleDynamicProxy()
+    public ulong LogWithCastleDynamicProxy()
     {
-        var cityLocation = _locationService.Get(_city);
-        var data = await _weatherServiceLoggingInterceptor.RetrieveWeatherForecast(cityLocation);
-        if (cityLocation == null || data == null)
-            return null;
-
-        var fib = _fibonacciService.CalculateWithCache(cityLocation.plateCode);
-        //return fib;
-        return new
-        {
-            PlateCode = cityLocation.plateCode,
-            FibonacciOfPlateCode = fib,
-            WeatherForecast = data
-        };
+        return _fibonacciServiceLoggingInterceptor.Calculate(n, optimized);
     }
     #endregion
 }

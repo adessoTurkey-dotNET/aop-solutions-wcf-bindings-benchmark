@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace AOP.Interceptors;
 
-public class ProfiledWeatherServiceInterceptor : IInterceptor
+public class ProfiledFibonacciServiceInterceptor : IInterceptor
 {
     public void Intercept(IInvocation invocation)
     {

@@ -7,11 +7,11 @@ using WCF.Service;
 
 namespace WCF.Client
 {
-    [SimpleJob(RunStrategy.Monitoring, targetCount: 100)]
+    [SimpleJob(RunStrategy.Monitoring, iterationCount: 100)]
     [MinColumn, MaxColumn, MeanColumn, MedianColumn, IterationsColumn]
     public class Program
     {
-        [Params(6, 16, 34)]
+        [Params(34)]
         public static int n;
 
         [Params(true, false)]

@@ -9,21 +9,6 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass kZPhV5fS
     volumes: 
       - redis:/redis-data
-  api:
-    container_name: AOPBenchmark
-    build:
-      context: .
-    depends_on:
-      - redis
-    ports:
-      - "3000:80"
-    environment:
-      ASPNETCORE_ENVIRONMENT: "Development"
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: kZPhV5fS
-    links:
-      - redis
 volumes:
   redis:
     driver: local

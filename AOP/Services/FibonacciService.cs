@@ -1,12 +1,10 @@
-﻿using AOP.Services.Interfaces;
-
-namespace AOP.Services;
+﻿namespace AOP.Services;
 
 public class FibonacciService : IFibonacciService
 {
-    private Dictionary<int, ulong> _cache = new Dictionary<int, ulong>();
+    private readonly Dictionary<int, ulong> _cache = new Dictionary<int, ulong>();
 
-    public ulong CalculateWithoutCache(int n)
+    private ulong CalculateWithoutCache(int n)
     {
         n = n < 0 ? 0 : n;
 
@@ -17,7 +15,7 @@ public class FibonacciService : IFibonacciService
         return _cache[n];
     }
 
-    public ulong CalculateWithCache(int n)
+    private ulong CalculateWithCache(int n)
     {
         n = n < 0 ? 0 : n;
 
@@ -31,5 +29,15 @@ public class FibonacciService : IFibonacciService
 
         _cache[n] = CalculateWithCache(n - 1) + CalculateWithCache(n - 2);
         return _cache[n];
+    }
+
+    public ulong Calculate(int n, bool optimized)
+    {
+        if (optimized)
+        {
+            return CalculateWithCache(n);
+        }
+
+        return CalculateWithoutCache(n);
     }
 }
