@@ -1,5 +1,4 @@
 # Benchmark Projects for 2022H2 OKR
----
 
 ## Benchmark of Solutions to Different Problems Using Different Aspect Oriented Techniques
 
